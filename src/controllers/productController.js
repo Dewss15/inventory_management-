@@ -1,21 +1,13 @@
 const productService = require('../services/productService');
 
-async function createProduct(req, res) {
-  try {
-    const product = await productService.createProduct(req.body);
-    return res.status(201).json(product);
-  } catch (err) {
-    return res.status(err.status || 400).json({ error: err.message });
-  }
+function handle(res, promise, successStatus = 200) {
+  return promise
+    .then((data) => res.status(successStatus).json(data))
+    .catch((err) => res.status(err.status || 500).json({ error: err.message }));
 }
 
-async function getProducts(req, res) {
-  try {
-    const products = await productService.getProducts();
-    return res.json(products);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-}
+exports.createProduct = (req, res) =>
+  handle(res, productService.createProduct(req.body), 201);
 
-module.exports = { createProduct, getProducts };
+exports.getAllProducts = (req, res) =>
+  handle(res, productService.getAllProducts());

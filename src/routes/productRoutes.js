@@ -1,10 +1,10 @@
 const router = require('express').Router();
-const productController = require('../controllers/productController');
 const authMiddleware = require('../middleware/authMiddleware');
+const productController = require('../controllers/productController');
 
 router.use(authMiddleware);
 
-router.post('/',  productController.createProduct);
-router.get('/',   productController.getProducts);
+router.post('/', productController.createProduct);
+router.get('/',  productController.getAllProducts);
 
 module.exports = router;

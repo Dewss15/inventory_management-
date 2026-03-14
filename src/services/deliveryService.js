@@ -1,8 +1,14 @@
 const Delivery = require('../models/Delivery');
 const Product = require('../models/Product');
+const MoveHistory = require('../models/MoveHistory');
 const { generateReference } = require('../utils/referenceGenerator');
 
-const STATUS_FLOW = ['Draft', 'Waiting', 'Ready', 'Done'];
+const VALID_TRANSITIONS = {
+  Draft:   ['Waiting', 'Ready'],
+  Waiting: ['Ready'],
+  Ready:   ['Done'],
+  Done:    [],
+};
 
 function createError(message, status = 400) {
   const err = new Error(message);
@@ -10,15 +16,17 @@ function createError(message, status = 400) {
   return err;
 }
 
+function populate(query) {
+  return query.populate('products.product_id');
+}
+
 async function createDelivery({ delivery_address, schedule_date, products }) {
   const reference = await generateReference('delivery');
 
-  // Check stock for each product; if any is insufficient → Waiting
   let status = 'Draft';
   for (const item of products) {
     const product = await Product.findById(item.product_id);
-    if (!product) throw createError(`Product ${item.product_id} not found`, 404);
-    if (item.quantity > product.stock) {
+    if (!product || product.stock < item.quantity) {
       status = 'Waiting';
       break;
     }
@@ -31,39 +39,55 @@ async function createDelivery({ delivery_address, schedule_date, products }) {
     products,
     status,
   });
+  return populate(Delivery.findById(delivery._id));
+}
+
+async function getAllDeliveries() {
+  return populate(Delivery.find().sort({ created_at: -1 }));
+}
+
+async function getDeliveryById(id) {
+  const delivery = await populate(Delivery.findById(id));
+  if (!delivery) throw createError('Delivery not found', 404);
   return delivery;
 }
 
-async function updateDeliveryStatus(id, newStatus) {
+async function updateStatus(id, newStatus) {
   const delivery = await Delivery.findById(id);
   if (!delivery) throw createError('Delivery not found', 404);
 
-  const currentIndex = STATUS_FLOW.indexOf(delivery.status);
-  const nextIndex = STATUS_FLOW.indexOf(newStatus);
+  const allowed = VALID_TRANSITIONS[delivery.status];
+  if (!allowed.includes(newStatus)) {
+    throw createError(`Invalid status transition: ${delivery.status} → ${newStatus}`);
+  }
 
-  if (nextIndex === -1) throw createError('Invalid status');
-  if (nextIndex !== currentIndex + 1) {
-    throw createError(`Cannot transition from ${delivery.status} to ${newStatus}`);
+  if (newStatus === 'Done') {
+    await _processDone(delivery);
   }
 
   delivery.status = newStatus;
-
-  if (newStatus === 'Done') {
-    for (const item of delivery.products) {
-      await Product.findByIdAndUpdate(item.product_id, {
-        $inc: { stock: -item.quantity },
-      });
-    }
-  }
-
   await delivery.save();
-  return delivery;
+  return populate(Delivery.findById(id));
 }
 
-async function getDeliveries() {
-  return Delivery.find()
-    .populate('products.product_id', 'name sku unit')
-    .sort({ created_at: -1 });
+async function _processDone(delivery) {
+  for (const item of delivery.products) {
+    await Product.findByIdAndUpdate(
+      item.product_id,
+      { $inc: { stock: -item.quantity } }
+    );
+
+    await MoveHistory.create({
+      reference:     delivery.reference,
+      product_id:    item.product_id,
+      date:          new Date(),
+      contact:       delivery.delivery_address,
+      from_location: 'Warehouse',
+      to_location:   delivery.delivery_address,
+      quantity:      -item.quantity,
+      status:        'Done',
+    });
+  }
 }
 
-module.exports = { createDelivery, updateDeliveryStatus, getDeliveries };
+module.exports = { createDelivery, getAllDeliveries, getDeliveryById, updateStatus };

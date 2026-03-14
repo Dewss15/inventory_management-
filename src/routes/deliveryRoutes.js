@@ -1,11 +1,12 @@
 const router = require('express').Router();
-const deliveryController = require('../controllers/deliveryController');
 const authMiddleware = require('../middleware/authMiddleware');
+const deliveryController = require('../controllers/deliveryController');
 
 router.use(authMiddleware);
 
 router.post('/',            deliveryController.createDelivery);
-router.get('/',             deliveryController.getDeliveries);
-router.patch('/:id/status', deliveryController.updateDeliveryStatus);
+router.get('/',             deliveryController.getAllDeliveries);
+router.get('/:id',          deliveryController.getDeliveryById);
+router.patch('/:id/status', deliveryController.updateStatus);
 
 module.exports = router;

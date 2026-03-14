@@ -1,30 +1,19 @@
 const receiptService = require('../services/receiptService');
 
-async function createReceipt(req, res) {
-  try {
-    const receipt = await receiptService.createReceipt(req.body, req.user.id);
-    return res.status(201).json(receipt);
-  } catch (err) {
-    return res.status(err.status || 400).json({ error: err.message });
-  }
+function handle(res, promise, successStatus = 200) {
+  return promise
+    .then((data) => res.status(successStatus).json(data))
+    .catch((err) => res.status(err.status || 500).json({ error: err.message }));
 }
 
-async function updateReceiptStatus(req, res) {
-  try {
-    const receipt = await receiptService.updateReceiptStatus(req.params.id, req.body.status);
-    return res.json(receipt);
-  } catch (err) {
-    return res.status(err.status || 400).json({ error: err.message });
-  }
-}
+exports.createReceipt = (req, res) =>
+  handle(res, receiptService.createReceipt(req.body, req.user.id), 201);
 
-async function getReceipts(req, res) {
-  try {
-    const receipts = await receiptService.getReceipts();
-    return res.json(receipts);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-}
+exports.getAllReceipts = (req, res) =>
+  handle(res, receiptService.getAllReceipts());
 
-module.exports = { createReceipt, updateReceiptStatus, getReceipts };
+exports.getReceiptById = (req, res) =>
+  handle(res, receiptService.getReceiptById(req.params.id));
+
+exports.updateStatus = (req, res) =>
+  handle(res, receiptService.updateStatus(req.params.id, req.body.status));

@@ -1,30 +1,19 @@
 const deliveryService = require('../services/deliveryService');
 
-async function createDelivery(req, res) {
-  try {
-    const delivery = await deliveryService.createDelivery(req.body);
-    return res.status(201).json(delivery);
-  } catch (err) {
-    return res.status(err.status || 400).json({ error: err.message });
-  }
+function handle(res, promise, successStatus = 200) {
+  return promise
+    .then((data) => res.status(successStatus).json(data))
+    .catch((err) => res.status(err.status || 500).json({ error: err.message }));
 }
 
-async function updateDeliveryStatus(req, res) {
-  try {
-    const delivery = await deliveryService.updateDeliveryStatus(req.params.id, req.body.status);
-    return res.json(delivery);
-  } catch (err) {
-    return res.status(err.status || 400).json({ error: err.message });
-  }
-}
+exports.createDelivery = (req, res) =>
+  handle(res, deliveryService.createDelivery(req.body), 201);
 
-async function getDeliveries(req, res) {
-  try {
-    const deliveries = await deliveryService.getDeliveries();
-    return res.json(deliveries);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-}
+exports.getAllDeliveries = (req, res) =>
+  handle(res, deliveryService.getAllDeliveries());
 
-module.exports = { createDelivery, updateDeliveryStatus, getDeliveries };
+exports.getDeliveryById = (req, res) =>
+  handle(res, deliveryService.getDeliveryById(req.params.id));
+
+exports.updateStatus = (req, res) =>
+  handle(res, deliveryService.updateStatus(req.params.id, req.body.status));

@@ -1,18 +1,20 @@
 {
-  "name": "ims-backend",
+  "name": "flux-ims",
   "version": "1.0.0",
-  "description": "Inventory Management System Backend",
-  "main": "src/app.js",
+  "description": "Inventory Management System - Flux Hackathon",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "node src/tests/index.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.4.0"
+    "mongoose": "^8.4.0",
+    "nodemailer": "^6.10.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.3"

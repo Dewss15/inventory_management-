@@ -6,7 +6,6 @@ const otpCodeSchema = new mongoose.Schema({
   expires_at: { type: Date, required: true },
 });
 
-// Auto-delete expired OTPs via TTL index
 otpCodeSchema.index({ expires_at: 1 }, { expireAfterSeconds: 0 });
 
 module.exports = mongoose.model('OtpCode', otpCodeSchema);

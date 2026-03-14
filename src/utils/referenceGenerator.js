@@ -1,31 +1,17 @@
 const Counter = require('../models/Counter');
 
-const PREFIXES = {
-  receipt: 'WH/IN',
-  delivery: 'WH/OUT',
-};
-
-const COUNTER_NAMES = {
-  receipt: 'receipt_seq',
-  delivery: 'delivery_seq',
-};
-
 async function generateReference(type) {
-  const prefix = PREFIXES[type];
-  const counterName = COUNTER_NAMES[type];
-
-  if (!prefix || !counterName) {
-    throw new Error(`Unknown reference type: ${type}`);
-  }
+  const key = type === 'receipt' ? 'WH_IN' : 'WH_OUT';
+  const label = type === 'receipt' ? 'IN' : 'OUT';
 
   const counter = await Counter.findOneAndUpdate(
-    { name: counterName },
+    { name: key },
     { $inc: { seq: 1 } },
     { new: true, upsert: true }
   );
 
   const padded = String(counter.seq).padStart(4, '0');
-  return `${prefix}/${padded}`;
+  return `WH/${label}/${padded}`;
 }
 
 module.exports = { generateReference };

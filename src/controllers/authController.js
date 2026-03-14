@@ -1,48 +1,22 @@
 const authService = require('../services/authService');
 
-async function signup(req, res) {
-  try {
-    const result = await authService.signup(req.body);
-    return res.status(201).json(result);
-  } catch (err) {
-    return res.status(err.status || 400).json({ error: err.message });
-  }
+function handle(res, promise, successStatus = 200) {
+  return promise
+    .then((data) => res.status(successStatus).json(data))
+    .catch((err) => res.status(err.status || 500).json({ error: err.message }));
 }
 
-async function login(req, res) {
-  try {
-    const result = await authService.login(req.body);
-    return res.json(result);
-  } catch (err) {
-    return res.status(err.status || 400).json({ error: err.message });
-  }
-}
+exports.signup = (req, res) =>
+  handle(res, authService.signup(req.body), 201);
 
-async function forgotPassword(req, res) {
-  try {
-    const result = await authService.forgotPassword(req.body);
-    return res.json(result);
-  } catch (err) {
-    return res.status(err.status || 400).json({ error: err.message });
-  }
-}
+exports.login = (req, res) =>
+  handle(res, authService.login(req.body));
 
-async function verifyOtp(req, res) {
-  try {
-    const result = await authService.verifyOtp(req.body);
-    return res.json(result);
-  } catch (err) {
-    return res.status(err.status || 400).json({ error: err.message });
-  }
-}
+exports.forgotPassword = (req, res) =>
+  handle(res, authService.forgotPassword(req.body));
 
-async function resetPassword(req, res) {
-  try {
-    const result = await authService.resetPassword(req.body);
-    return res.json(result);
-  } catch (err) {
-    return res.status(err.status || 400).json({ error: err.message });
-  }
-}
+exports.verifyOtp = (req, res) =>
+  handle(res, authService.verifyOtp(req.body));
 
-module.exports = { signup, login, forgotPassword, verifyOtp, resetPassword };
+exports.resetPassword = (req, res) =>
+  handle(res, authService.resetPassword(req.body));

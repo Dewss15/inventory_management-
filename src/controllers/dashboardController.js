@@ -1,12 +1,10 @@
 const dashboardService = require('../services/dashboardService');
 
-async function getDashboard(req, res) {
-  try {
-    const stats = await dashboardService.getDashboard();
-    return res.json(stats);
-  } catch (err) {
-    return res.status(err.status || 500).json({ error: err.message });
-  }
+function handle(res, promise, successStatus = 200) {
+  return promise
+    .then((data) => res.status(successStatus).json(data))
+    .catch((err) => res.status(err.status || 500).json({ error: err.message }));
 }
 
-module.exports = { getDashboard };
+exports.getDashboardStats = (req, res) =>
+  handle(res, dashboardService.getDashboardStats());
